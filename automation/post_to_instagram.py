@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Instagram Graph API 投稿スクリプト(標準ライブラリのみ・pip不要)
+"""Instagram API(Instagram Login方式)投稿スクリプト(標準ライブラリのみ・pip不要)
 
 使い方:
     python post_to_instagram.py --image-url https://.../photo.jpg --caption "キャプション本文" \
-        --ig-user-id 1234567890 --access-token EAAG...
+        --ig-user-id 28538506969107764 --access-token IGAA...
 
     # アクセストークン/IDは環境変数からも読み込み可能
     #   IG_USER_ID, IG_ACCESS_TOKEN
@@ -14,6 +14,11 @@
     3. POST /{ig-user-id}/media_publish  コンテナを公開(実際に投稿される)
 
 成功すると投稿のmedia idを標準出力に1行で出す(呼び出し側がログに使う)。
+
+注意: 2024年以降のMeta「Instagram API with Instagram Login」方式を使用しており、
+エンドポイントは graph.facebook.com ではなく graph.instagram.com。
+アクセストークンはMeta開発者ダッシュボードの「アクセストークンを生成」ボタン、
+または refresh_token.py で更新したものを使う(IGAAで始まる文字列)。
 """
 
 import argparse
@@ -26,7 +31,7 @@ import urllib.parse
 import urllib.request
 
 API_VERSION = "v21.0"
-BASE_URL = f"https://graph.facebook.com/{API_VERSION}"
+BASE_URL = f"https://graph.instagram.com/{API_VERSION}"
 
 
 def _post(path: str, params: dict) -> dict:
@@ -88,8 +93,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Instagram Graph APIで画像を投稿します")
     parser.add_argument("--image-url", required=True, help="投稿する画像の公開URL(raw.githubusercontent.com等)")
     parser.add_argument("--caption", required=True, help="投稿キャプション本文(ハッシュタグ込み)")
-    parser.add_argument("--ig-user-id", default=os.environ.get("IG_USER_ID", ""), help="InstagramビジネスアカウントID")
-    parser.add_argument("--access-token", default=os.environ.get("IG_ACCESS_TOKEN", ""), help="Facebookページアクセストークン")
+    parser.add_argument("--ig-user-id", default=os.environ.get("IG_USER_ID", ""), help="Instagramユーザー ID(/me で取得できるid)")
+    parser.add_argument("--access-token", default=os.environ.get("IG_ACCESS_TOKEN", ""), help="Instagramアクセストークン(IGAA...)")
     args = parser.parse_args()
 
     if not args.ig_user_id:

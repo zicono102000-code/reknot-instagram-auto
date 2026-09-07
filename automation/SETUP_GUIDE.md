@@ -1,61 +1,52 @@
 # Instagram自動投稿 セットアップガイド(Meta/Instagram側)
 
-このガイドはアカウント作成・ログインを伴うため、必ずご本人が操作してください。詰まったところがあれば画面を教えていただければ一緒に確認します。
+このガイドはアカウント作成・ログインを伴うため、必ずご本人が操作してください。
 
-必要なもの: Instagramアカウント、Facebookアカウント(RE:KNOT運営用に用意、既存の個人アカウントで代用も可)
+必要なもの: Instagramアカウント(プロアカウント化する)、Facebookアカウント(Meta開発者用)
+
+※2024年以降、MetaはInstagram投稿の自動化に**「Instagram API with Instagram Login」**という新方式を導入しています。これはFacebookページ経由ではなく、Instagramアカウント自体で直接ログイン・認可する方式です。本ガイドはこちらの新方式に沿っています。
 
 ## ステップ1: Instagramをプロアカウントにする
 
 1. Instagramアプリ → プロフィール画面 → 右上メニュー → 「アカウントの種類とツール」
 2. 「プロアカウントに切り替える」を選択
 3. カテゴリを選択(例:「クリーニング店」「衣料品店」等、近いものでOK)
-4. 「ビジネス」を選択(「クリエイター」ではなくビジネス)
+4. 「ビジネス」を選択
 
-## ステップ2: Facebookページと連携する
+(Facebookページとの連携は今回の方式では必須ではありません)
 
-1. プロアカウント設定の流れの中で「Facebookページと連携」を選べる場合はそのまま進める
-2. 連携できるページがなければ、Facebookで新規ページを作成(ページ名: RE:KNOT など)してから連携する
-3. 連携後、Instagram側の設定 →「アカウントセンター」→「アカウントとプロフィールの連携」でFacebookページとの連携が「連携済み」になっていることを確認
-
-## ステップ3: Metaアプリを作成する
+## ステップ2: Metaアプリを作成する
 
 1. https://developers.facebook.com/apps/ にアクセスし、Facebookアカウントでログイン
 2. 「アプリを作成」→ アプリタイプは「ビジネス」を選択
-3. アプリ名(例: RE:KNOT Instagram Automation)を入力して作成
-4. 作成後のダッシュボードで「製品を追加」→ **Instagram** を追加(Instagram Graph API/Instagram APIの製品)
-5. 左メニューの「設定」→「基本設定」で **App ID** と **App Secret** をメモしておく(あとで`refresh_token.py`に使う)
+3. アプリ名を入力して作成
+4. 左メニューの「アプリの設定」→「基本設定」で **App ID** と **App Secret** をメモしておく
 
-## ステップ4: アクセストークンを発行する
+## ステップ3: 「Instagramでメッセージとコンテンツを管理」ユースケースを追加
 
-1. Metaアプリのダッシュボード内「ツール」→「Graph API Explorer」を開く
-2. 右上の「User or Page」で対象のFacebookページを選択
-3. 「Permissions」に以下を追加:
-   - `instagram_basic`
-   - `instagram_content_publish`
-   - `pages_show_list`
-   - `pages_read_engagement`
-4. 「Generate Access Token」を押し、認可ダイアログでRE:KNOTのFacebookページとInstagramアカウントへのアクセスを許可
-5. 発行された(短期の)トークンをコピーする
-6. これは短期トークンなので、長期トークン(60日)に交換する。ブラウザで以下のURLを開く(`{}`部分は実際の値に置き換え):
+1. 左メニュー「ユースケース」を開く
+2. 「Instagramでメッセージとコンテンツを管理」の「カスタマイズ」をクリック
+3. 表示された設定画面の「1. 必要なメッセージアクセス許可を追加する」で **「Add all required permissions」** をクリック
+4. 左メニュー「アクセス許可と機能」を開き、`instagram_business_content_publish`(投稿の自動公開に必須)が有効になっているか確認。無ければ追加する
 
-   ```
-   https://graph.facebook.com/v21.0/oauth/access_token?grant_type=fb_exchange_token&client_id={App ID}&client_secret={App Secret}&fb_exchange_token={ステップ4-5でコピーした短期トークン}
-   ```
+## ステップ4: Instagramアカウントをテスターとして追加
 
-7. レスポンスのJSON内`access_token`が長期トークン。これをメモしておく(以後`IG_ACCESS_TOKEN`として使う)
+開発モードのアプリでは、投稿対象のInstagramアカウントを明示的にテスター登録する必要があります。
 
-## ステップ5: InstagramビジネスアカウントIDを取得する
+1. 左メニュー「アプリの役割」→「役割」を開く
+2. 「メンバーを追加」→「Instagramテスター」を選択し、RE:KNOTのInstagramアカウントのユーザー名を追加(「承認待ち」と表示される)
+3. **RE:KNOTのInstagramアカウントでログインした状態**で、Instagramアプリ → 設定とプライバシー →「アプリとウェブサイト」(または類似の項目)→「テスター招待」タブを開き、招待を承認する
 
-1. Graph API Explorerで、下記のリクエストを長期トークン付きで実行:
+## ステップ5: アクセストークンを取得する
+
+1. 「ユースケース」→「Instagramでメッセージとコンテンツを管理」→「カスタマイズ」→左メニュー「Instagramログインによる API設定」を開く
+2. 「2. アクセストークンを生成する」のところに、ステップ4で承認したInstagramアカウント(例: `re.knot2026`)が表示されているはず
+3. その行の **「トークンを生成」** をクリックし、認可を進める
+4. 表示されたトークン(`IGAA...`で始まる文字列)をコピーする。**これは発行時点ですでに約60日間有効な長期トークン**
+5. 同じ画面に表示されている **Instagramユーザーの数字ID**(例: `28538506969107764`)も控えておく。または以下のコマンドで確認できる:
+   ```bash
+   curl "https://graph.instagram.com/v21.0/me?fields=id,username&access_token={取得したトークン}"
    ```
-   GET /me/accounts?access_token={長期トークン}
-   ```
-2. レスポンスからRE:KNOTのFacebookページの`id`(ページID)を確認
-3. 続けて以下を実行:
-   ```
-   GET /{ページID}?fields=instagram_business_account&access_token={長期トークン}
-   ```
-4. レスポンス内`instagram_business_account.id`がInstagramビジネスアカウントID(以後`IG_USER_ID`として使う)
 
 ## ステップ6: 動作確認(手元で1回テスト)
 
@@ -65,8 +56,8 @@
 python automation/post_to_instagram.py \
   --image-url "https://raw.githubusercontent.com/xxxx/xxxx/main/queue/test.jpg" \
   --caption "テスト投稿です" \
-  --ig-user-id "{IG_USER_ID}" \
-  --access-token "{IG_ACCESS_TOKEN}"
+  --ig-user-id "{ステップ5で取得した数字ID}" \
+  --access-token "{ステップ5で取得したトークン}"
 ```
 
 成功すると投稿のmedia idが出力され、Instagramのプロフィールに投稿が反映される。
@@ -77,10 +68,12 @@ python automation/post_to_instagram.py \
 
 ## トークンの更新(60日ごと)
 
-長期トークンは60日で失効する。失効前に以下を実行すると新しい60日トークンが発行される:
+長期トークンは約60日で失効する。失効前に以下を実行すると新しい約60日トークンが発行される(App ID/Secretは不要、トークン自体だけで更新可能):
 
 ```bash
-python automation/refresh_token.py --app-id {App ID} --app-secret {App Secret} --current-token {現在のトークン}
+python automation/refresh_token.py --current-token {現在のトークン}
 ```
 
 出力された新しいトークンを、ルーティン設定に反映する(私に伝えていただければ更新します)。
+
+もしトークンが完全に失効してしまった場合は、ステップ5の「トークンを生成」を再度実行すれば、新しいトークンを取得できる。
